@@ -113,7 +113,7 @@ void main() {
 
    fogFactor = clamp(fogFactor, 0.0, 1.0);
 
-   vec3 shadeColour =blinnPhongSpot(pos,normalize(n));
+   //vec3 shadeColour =blinnPhongSpot(pos,normalize(n));
 
    Colour = mix(Fog.Colour, blinnPhongSpot(pos,normalize(n)), fogFactor);
 

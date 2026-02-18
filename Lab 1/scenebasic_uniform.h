@@ -20,7 +20,7 @@ using glm::vec3;
 class SceneBasic_Uniform : public Scene
 {
 private:
-    GLSLProgram prog;
+    GLSLProgram prog, mixShader;
     glm::mat4 rotationMatrix;
     Torus torus;
     Teapot teapot;
@@ -31,11 +31,12 @@ private:
     glm::mat4 rotateModel;
     glm::mat4 barrelModel;
 
-    GLuint texID = Texture::loadTexture("media/texture/ao_ears.png");
-    GLuint texID1 = Texture::loadTexture("media/texture/ogre_diffuse.png");
-    GLuint texID2 = Texture::loadTexture("media/texture/flower.png");
-    GLuint texID3 = Texture::loadTexture("media/texture/fire.png");
-    GLuint texID4 = Texture::loadTexture("media/texture/cement.jpg");
+    GLuint brick = Texture::loadTexture("media/texture/brick1.jpg");
+    GLuint moss = Texture::loadTexture("media/texture/moss.png");
+    GLuint ogreDiffuse = Texture::loadTexture("media/texture/ogre_diffuse.png");
+    GLuint flower = Texture::loadTexture("media/texture/flower.png");
+    GLuint fire = Texture::loadTexture("media/texture/fire.png");
+    GLuint cement = Texture::loadTexture("media/texture/cement.jpg");
     GLuint barrelTex = Texture::loadTexture("media/texture/WoodenBarrel/Barrel_Lowpoly_DefaultMaterial_AlbedoTransparency.png");
     GLuint barrelNorm = Texture::loadTexture("media/texture/WoodenBarrel/Barrel_Lowpoly_DefaultMaterial_Normal.png");
 
@@ -70,6 +71,7 @@ public:
     SceneBasic_Uniform();
     void rotateModelMMM();
     void setMatrices();
+    void setMatricesMix();
     void initScene();
     void update( float t );
     void render();
