@@ -5,12 +5,12 @@
 class Scene
 {
 protected:
-	glm::mat4 model, view, projection;
+	glm::mat4 model, projection;
 
 public:
     int width;
     int height;
-
+    glm::mat4 view;
 	Scene() : m_animate(true), width(1920), height(1080) { }
 	virtual ~Scene() {}
 

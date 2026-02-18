@@ -17,6 +17,9 @@ using glm::mat4;
 using glm::vec3;
 using glm::vec4;
 
+
+
+
 SceneBasic_Uniform::SceneBasic_Uniform() : plane(50.0f,50.0f, 1, 1), teapot(14,glm::mat4(1.0f)), torus(1.75f*0.75f, 0.75f*0.75f, 50,50)
 {
     mesh = ObjMesh::load("media/pig_triangulated.obj", true);
@@ -48,7 +51,7 @@ void SceneBasic_Uniform::initScene()
         z = 2.0f * sinf((glm::two_pi<float>() / 3) * i);
         prog.setUniform(name.str().c_str(), view * glm::vec4(x, 1.2f, z + 1.0f, -1.0f));
     }
-    prog.setUniform("lights[0].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
+    prog.setUniform("lights[0].L", vec3(1.0f, 1.0f, 1.0f) /1.5f);
     prog.setUniform("lights[1].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
     prog.setUniform("lights[2].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
 
@@ -209,3 +212,4 @@ void SceneBasic_Uniform::resize(int w, int h)
     height = h;
     projection = glm::perspective(glm::radians(70.0f), (float)w / h, 0.3f, 100.0f);
 }
+

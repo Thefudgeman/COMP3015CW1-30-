@@ -3,13 +3,39 @@
 #include <GLFW/glfw3.h>
 #include "glutils.h"
 
-#define WIN_WIDTH 1920
-#define WIN_HEIGHT 1080
+#define WIN_WIDTH 1280
+#define WIN_HEIGHT 720
 
 #include <map>
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
+
+//using glm::vec3;
+
+//Transformations
+//Relative position within world space
+glm::vec3 cameraPosition = glm::vec3(3.0f, 5.0f, 10.0f);
+//The direction of travel
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+//Up position within world space
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+//Camera sidways rotation
+float cameraYaw = -90.0f;
+//Camera vertical rotation
+float cameraPitch = 0.0f;
+//Determines if first entry of mouse into window
+bool mouseFirstEntry = true;
+//Positions of camera from given last frame
+float cameraLastXPos = 800.0f / 2.0f;
+float cameraLastYPos = 600.0f / 2.0f;
+
+float deltaTime = 0.0f;
+//Last value of time change
+float lastFrame = 0.0f;
+
 
 class SceneRunner {
 private:
@@ -117,9 +143,21 @@ private:
     }
 
     void mainLoop(GLFWwindow * window, Scene & scene) {
+        
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+        glfwSetCursorPosCallback(window, mouse_callback);
+
         while( ! glfwWindowShouldClose(window) && !glfwGetKey(window, GLFW_KEY_ESCAPE) ) {
             GLUtils::checkForOpenGLError(__FILE__,__LINE__);
 			
+            float currentFrame = static_cast<float>(glfwGetTime());
+            deltaTime = currentFrame - lastFrame;
+            lastFrame = currentFrame;
+            scene.view = glm::lookAt(cameraPosition, cameraPosition + cameraFront, cameraUp); //Sets the position of the viewer, the movement direction in relation to it & the world up direction
+
+            ProcessUserInput(window);
+
             scene.update(float(glfwGetTime()));
             scene.render();
             glfwSwapBuffers(window);
@@ -128,6 +166,96 @@ private:
 			int state = glfwGetKey(window, GLFW_KEY_SPACE);
 			if (state == GLFW_PRESS)
 				scene.animate(!scene.animating());
+        }
+    }
+
+    static void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+    {
+        //Initially no last positions, so sets last positions to current positions
+        if (mouseFirstEntry)
+        {
+            cameraLastXPos = (float)xpos;
+            cameraLastYPos = (float)ypos;
+            mouseFirstEntry = false;
+        }
+
+        //Sets values for change in position since last frame to current frame
+        float xOffset = (float)xpos - cameraLastXPos;
+        float yOffset = cameraLastYPos - (float)ypos;
+
+        //Sets last positions to current positions for next frame
+        cameraLastXPos = (float)xpos;
+        cameraLastYPos = (float)ypos;
+
+        //Moderates the change in position based on sensitivity value
+        const float sensitivity = 0.025f;
+        xOffset *= sensitivity;
+        yOffset *= sensitivity;
+
+        //Adjusts yaw & pitch values against changes in positions
+        cameraYaw += xOffset;
+        cameraPitch += yOffset;
+
+        //Prevents turning up & down beyond 90 degrees to look backwards
+        if (cameraPitch > 89.0f)
+        {
+            cameraPitch = 89.0f;
+        }
+        else if (cameraPitch < -89.0f)
+        {
+            cameraPitch = -89.0f;
+        }
+
+        //Modification of direction vector based on mouse turning
+        glm::vec3 direction;
+        direction.x = cos(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
+        direction.y = sin(glm::radians(cameraPitch));
+        direction.z = sin(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
+        cameraFront = normalize(direction);
+    }
+
+    void ProcessUserInput(GLFWwindow* WindowIn)
+    {
+        //Closes window on 'exit' key press
+        if (glfwGetKey(WindowIn, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        {
+            glfwSetWindowShouldClose(WindowIn, true);
+        }
+
+        //Extent to which to move in one instance
+        float movementSpeed = 7.0f * deltaTime;
+        //WASD controls
+        if (glfwGetKey(WindowIn, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        {
+            movementSpeed *= 2.0f;
+        }
+    //    if (glfwGetKey(WindowIn, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+    //    {
+    //        movementSpeed /= 2.0f;
+      //  }
+        if (glfwGetKey(WindowIn, GLFW_KEY_W) == GLFW_PRESS)
+        {
+            cameraPosition += movementSpeed * cameraFront;
+        }
+        if (glfwGetKey(WindowIn, GLFW_KEY_S) == GLFW_PRESS)
+        {
+            cameraPosition -= movementSpeed * cameraFront;
+        }
+        if (glfwGetKey(WindowIn, GLFW_KEY_A) == GLFW_PRESS)
+        {
+            cameraPosition -= normalize(cross(cameraFront, cameraUp)) * movementSpeed;
+        }
+        if (glfwGetKey(WindowIn, GLFW_KEY_D) == GLFW_PRESS)
+        {
+            cameraPosition += normalize(cross(cameraFront, cameraUp)) * movementSpeed;
+        }
+        if (glfwGetKey(WindowIn, GLFW_KEY_SPACE) == GLFW_PRESS)
+        {
+            cameraPosition += cameraUp * movementSpeed;
+        }
+        if (glfwGetKey(WindowIn, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        {
+            cameraPosition -= cameraUp * movementSpeed;
         }
     }
 };

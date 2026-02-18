@@ -62,7 +62,11 @@ vec3 phongModel(int light, vec3 position, vec3 n)
 
 vec3 blinnPhongSpot(vec3 position, vec3 n)
 {
-    vec3 ambient = Spot.La * Material.Ka;
+
+   vec3 texColour = texture(Tex1, TexCoord).rgb;
+
+
+    vec3 ambient = Spot.La * texColour;
     
     vec3 s = normalize(vec3(Spot.Position.xyz-position));
 
@@ -78,14 +82,14 @@ vec3 blinnPhongSpot(vec3 position, vec3 n)
     {
         spotScale = pow(cosAng, Spot.Exponent);
         float sDotN = max(dot(n,s),0.0);
-        diffuse = Material.Kd*sDotN;    
+        diffuse = texColour*sDotN;    
         
 
         if(sDotN > 0.0)
         {
             vec3 v = normalize(-position.xyz);
-            vec3 r = reflect(-s,n);
-            spec = Material.Ks * pow(max(dot(r,v), 0.0), Material.Shinniness);
+            vec3 h = normalize(v+s);
+            spec = Material.Ks * pow(max(dot(h,n), 0.0), Material.Shinniness);
         }
     }
 
@@ -96,11 +100,12 @@ vec3 blinnPhongSpot(vec3 position, vec3 n)
 
 void main() {
 
+    vec3 Colour = vec3(0.0f);
 
-//    for (int i = 0; i<3; i++)
+   // for (int i = 0; i<3; i++)
   //  {
-    //     Colour += phongModel(i, pos, n);
-   // }
+    //     Colour = phongModel(0, pos, normalize(n));
+ //   }
 
    float dist = abs(pos.z);
 
@@ -110,9 +115,9 @@ void main() {
 
    vec3 shadeColour =blinnPhongSpot(pos,normalize(n));
 
-   vec3 Colour = mix(Fog.Colour, shadeColour, fogFactor);
+   Colour = mix(Fog.Colour, blinnPhongSpot(pos,normalize(n)), fogFactor);
 
-   vec3 texColour = texture(Tex1, TexCoord).rgb;
+  // vec3 texColour = texture(Tex1, TexCoord).rgb;
 
-    FragColor = vec4(texColour, 1.0);
+    FragColor = vec4(Colour, 1.0);
 }

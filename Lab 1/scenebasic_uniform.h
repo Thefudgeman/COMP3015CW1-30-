@@ -13,7 +13,9 @@
 #include "helper/teapot.h"
 #include "helper/cube.h"
 #include "helper/texture.h"
+#include <iostream>
 
+using glm::vec3;
 
 class SceneBasic_Uniform : public Scene
 {
@@ -39,6 +41,29 @@ private:
 
     float tPrev = 0.0f;
     float angle =0.0f;
+
+    //Transformations
+//Relative position within world space
+    glm::vec3 cameraPosition = vec3(0.0f, 0.0f, 3.0f);
+    //The direction of travel
+    vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
+    //Up position within world space
+    vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
+
+    //Camera sidways rotation
+    float cameraYaw = -90.0f;
+    //Camera vertical rotation
+    float cameraPitch = 0.0f;
+    //Determines if first entry of mouse into window
+    bool mouseFirstEntry = true;
+    //Positions of camera from given last frame
+    float cameraLastXPos = 800.0f / 2.0f;
+    float cameraLastYPos = 600.0f / 2.0f;
+
+    float deltaTime = 0.0f;
+    //Last value of time change
+    float lastFrame = 0.0f;
+
     void compile();
 
 public:
@@ -50,6 +75,7 @@ public:
     void render();
     void resize(int, int);
     void rotateBarrelModelMMM();
+  //  void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 };
 
 #endif // SCENEBASIC_UNIFORM_H
