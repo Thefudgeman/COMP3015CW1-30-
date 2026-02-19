@@ -24,6 +24,7 @@ SceneBasic_Uniform::SceneBasic_Uniform() : plane(50.0f,50.0f, 1, 1), teapot(14,g
 {
     mesh = ObjMesh::load("media/pig_triangulated.obj", true);
     barrel = ObjMesh::load("media/barrel.obj", true);
+    ogre = ObjMesh::load("media/bs_ears.obj", true);
 }
 
 void SceneBasic_Uniform::initScene()
@@ -56,7 +57,8 @@ void SceneBasic_Uniform::initScene()
         prog.setUniform(name.str().c_str(), view * glm::vec4(x, 1.2f, z + 1.0f, -1.0f));
         mixShader.use();
         mixShader.setUniform(name.str().c_str(), view * glm::vec4(x, 1.2f, z + 1.0f, -1.0f));
-
+        normalShader.use();
+        normalShader.setUniform(name.str().c_str(), view * glm::vec4(x, 1.2f, z + 1.0f, -1.0f));
     }
     prog.use();
     prog.setUniform("lights[0].L", vec3(1.0f, 1.0f, 1.0f) /1.5f);
@@ -87,6 +89,21 @@ void SceneBasic_Uniform::initScene()
     mixShader.setUniform("Fog.MinDist", 1.0f);
     mixShader.setUniform("Fog.Colour", vec3(0.5f, 0.5f, 0.5f));
 
+    normalShader.use();
+
+    normalShader.setUniform("lights[0].L", vec3(1.0f, 1.0f, 1.0f) / 1.5f);
+    normalShader.setUniform("lights[1].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
+    normalShader.setUniform("lights[2].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
+
+    normalShader.setUniform("Spot.L", vec3(0.9f));
+    normalShader.setUniform("Spot.La", vec3(0.5f));
+    normalShader.setUniform("Spot.Exponent", 10.0f);
+    normalShader.setUniform("Spot.Cutoff", glm::radians(120.0f));
+
+    normalShader.setUniform("Fog.MaxDist", 30.0f);
+    normalShader.setUniform("Fog.MinDist", 1.0f);
+    normalShader.setUniform("Fog.Colour", vec3(0.5f, 0.5f, 0.5f));
+
 }
 
 void SceneBasic_Uniform::compile()
@@ -101,6 +118,11 @@ void SceneBasic_Uniform::compile()
         mixShader.compileShader("shader/texture_mixing.frag");
         mixShader.link();
         mixShader.use();
+
+        normalShader.compileShader("shader/normalShader.vert");
+        normalShader.compileShader("shader/normalShader.frag");
+        normalShader.link();
+        normalShader.use();
     }
     catch (GLSLProgramException& e) {
         cerr << e.what() << endl;
@@ -158,7 +180,7 @@ void SceneBasic_Uniform::render()
     prog.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
 
     prog.setUniform("Material.Kd", 1.0f, 0.4f, 0.72f);
-    prog.setUniform("Material.Ks", vec3(0.5f));
+    prog.setUniform("Material.Ks", vec3(1.0f));
     prog.setUniform("Material.Ka", vec3(0.5f));
     prog.setUniform("Material.Shinniness", 180.0f);
 
@@ -195,20 +217,48 @@ void SceneBasic_Uniform::render()
     setMatrices();
     teapot.render();
 
+    normalShader.use();
+    normalShader.setUniform("Spot.Position", vec4(view * lightPos));
+    normalShader.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
+
+    normalShader.setUniform("Material.Kd", 1.0f * 10.0f, 0.4f * 10.0f, 0.72f * 10.0f);
+    normalShader.setUniform("Material.Ks", vec3(0.5f)*10.0f);
+    normalShader.setUniform("Material.Ka", vec3(0.5f) * 10.0f);
+    normalShader.setUniform("Material.Shinniness", 180.0f);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, barrelTex);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, barrelNorm);
 
    // glActiveTexture(GL_TEXTURE1);
    // glBindTexture(GL_TEXTURE_2D, barrelNorm);
 
  //   barrelModel = mat4(1.0f);
  //   barrelModel = glm::translate(barrelModel, vec3(-10.0f, 2.0f, 0.0f));
+    model = mat4(1.0f);
+    model = glm::translate(model, vec3(-10.0f, 2.0f, 0.0f));
+    model = glm::scale(model, vec3(0.1f));
 
-    rotateBarrelModelMMM();
+    setMatricesNorm();
     barrel->render();
 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, ogreDiffuse);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, ogreNorm);
+
+    model = mat4(1.0f);
+    model = glm::translate(model, vec3(-0.0f, 2.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(270.0f), vec3(1.0f, 0.0f, 0.0f));
+
+    setMatricesNorm();
+    ogre->render();
+
     mixShader.use();
-    mixShader.setUniform("Spot.Position", vec3(view * lightPos));
+    mixShader.setUniform("Spot.Position", vec3(view* lightPos));
     mixShader.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
 
     mixShader.setUniform("Material.Kd", 1.0f, 0.4f, 0.72f);
@@ -244,6 +294,14 @@ void SceneBasic_Uniform::setMatricesMix()
     mixShader.setUniform("ModelViewMatrix", mv);
     mixShader.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
     mixShader.setUniform("MVP", projection * mv);
+}
+
+void SceneBasic_Uniform::setMatricesNorm()
+{
+    mat4 mv = view * model;
+    normalShader.setUniform("ModelViewMatrix", mv);
+    normalShader.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
+    normalShader.setUniform("MVP", projection * mv);
 }
 
 void SceneBasic_Uniform::rotateModelMMM()

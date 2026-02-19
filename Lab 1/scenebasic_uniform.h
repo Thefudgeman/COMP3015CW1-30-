@@ -20,13 +20,13 @@ using glm::vec3;
 class SceneBasic_Uniform : public Scene
 {
 private:
-    GLSLProgram prog, mixShader;
+    GLSLProgram prog, mixShader, normalShader;
     glm::mat4 rotationMatrix;
     Torus torus;
     Teapot teapot;
     Plane plane;
     std::unique_ptr<ObjMesh> mesh;
-    std::unique_ptr<ObjMesh> barrel;
+    std::unique_ptr<ObjMesh> barrel, ogre;
     Cube cube;
     glm::mat4 rotateModel;
     glm::mat4 barrelModel;
@@ -34,6 +34,7 @@ private:
     GLuint brick = Texture::loadTexture("media/texture/brick1.jpg");
     GLuint moss = Texture::loadTexture("media/texture/moss.png");
     GLuint ogreDiffuse = Texture::loadTexture("media/texture/ogre_diffuse.png");
+    GLuint ogreNorm = Texture::loadTexture("media/texture/ogre_normalmap.png");
     GLuint flower = Texture::loadTexture("media/texture/flower.png");
     GLuint fire = Texture::loadTexture("media/texture/fire.png");
     GLuint cement = Texture::loadTexture("media/texture/cement.jpg");
@@ -72,6 +73,8 @@ public:
     void rotateModelMMM();
     void setMatrices();
     void setMatricesMix();
+    void setMatricesNorm();
+
     void initScene();
     void update( float t );
     void render();
