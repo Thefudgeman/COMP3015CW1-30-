@@ -8,6 +8,7 @@ protected:
 	glm::mat4 model, projection;
 
 public:
+    float fogScale = 1.0f;
     int width;
     int height;
     glm::mat4 view;

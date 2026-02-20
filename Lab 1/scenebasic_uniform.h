@@ -13,6 +13,7 @@
 #include "helper/teapot.h"
 #include "helper/cube.h"
 #include "helper/texture.h"
+#include "helper/skybox.h"
 #include <iostream>
 
 using glm::vec3;
@@ -20,7 +21,7 @@ using glm::vec3;
 class SceneBasic_Uniform : public Scene
 {
 private:
-    GLSLProgram prog, mixShader, normalShader;
+    
     glm::mat4 rotationMatrix;
     Torus torus;
     Teapot teapot;
@@ -30,6 +31,7 @@ private:
     Cube cube;
     glm::mat4 rotateModel;
     glm::mat4 barrelModel;
+    SkyBox sky;
 
     GLuint brick = Texture::loadTexture("media/texture/brick1.jpg");
     GLuint moss = Texture::loadTexture("media/texture/moss.png");
@@ -40,47 +42,29 @@ private:
     GLuint cement = Texture::loadTexture("media/texture/cement.jpg");
     GLuint barrelTex = Texture::loadTexture("media/texture/WoodenBarrel/Barrel_Lowpoly_DefaultMaterial_AlbedoTransparency.png");
     GLuint barrelNorm = Texture::loadTexture("media/texture/WoodenBarrel/Barrel_Lowpoly_DefaultMaterial_Normal.png");
-
-    float tPrev = 0.0f;
-    float angle =0.0f;
-
-    //Transformations
-//Relative position within world space
-    glm::vec3 cameraPosition = vec3(0.0f, 0.0f, 3.0f);
-    //The direction of travel
-    vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
-    //Up position within world space
-    vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
-
-    //Camera sidways rotation
-    float cameraYaw = -90.0f;
-    //Camera vertical rotation
-    float cameraPitch = 0.0f;
-    //Determines if first entry of mouse into window
-    bool mouseFirstEntry = true;
-    //Positions of camera from given last frame
-    float cameraLastXPos = 800.0f / 2.0f;
-    float cameraLastYPos = 600.0f / 2.0f;
-
-    float deltaTime = 0.0f;
-    //Last value of time change
-    float lastFrame = 0.0f;
+    GLuint cubeTex = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
 
     void compile();
 
 public:
+    GLSLProgram prog, mixShader, normalShader, skyBoxShader;
+
     SceneBasic_Uniform();
     void rotateModelMMM();
     void setMatrices();
     void setMatricesMix();
     void setMatricesNorm();
+    void setMatricesSkyBox();
+    void rotateBarrelModelMMM();
 
     void initScene();
-    void update( float t );
+    void update( float t);
     void render();
     void resize(int, int);
-    void rotateBarrelModelMMM();
-  //  void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+
+    float tPrev = 0.0f;
+    float angle = 0.0f;
+    float rotSpeed = 0.0f;
 };
 
 #endif // SCENEBASIC_UNIFORM_H

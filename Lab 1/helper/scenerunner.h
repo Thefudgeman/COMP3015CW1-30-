@@ -36,6 +36,7 @@ float deltaTime = 0.0f;
 //Last value of time change
 float lastFrame = 0.0f;
 
+bool fogUp, fogDown = false;
 
 class SceneRunner {
 private:
@@ -156,8 +157,8 @@ private:
             lastFrame = currentFrame;
             scene.view = glm::lookAt(cameraPosition, cameraPosition + cameraFront, cameraUp); //Sets the position of the viewer, the movement direction in relation to it & the world up direction
 
-            ProcessUserInput(window);
-
+            ProcessUserInput(window, scene);
+ 
             scene.update(float(glfwGetTime()));
             scene.render();
             glfwSwapBuffers(window);
@@ -214,7 +215,7 @@ private:
         cameraFront = normalize(direction);
     }
 
-    void ProcessUserInput(GLFWwindow* WindowIn)
+    void ProcessUserInput(GLFWwindow* WindowIn, Scene& scene)
     {
         //Closes window on 'exit' key press
         if (glfwGetKey(WindowIn, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -256,6 +257,26 @@ private:
         if (glfwGetKey(WindowIn, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         {
             cameraPosition -= cameraUp * movementSpeed;
+        }
+
+        if (glfwGetKey(WindowIn, GLFW_KEY_MINUS) == GLFW_PRESS && !fogUp)
+        {
+            scene.fogScale += 0.1f;
+            std::cout << scene.fogScale << std::endl;
+            fogUp = true;
+        }
+        else if (glfwGetKey(WindowIn, GLFW_KEY_MINUS) == GLFW_RELEASE && fogUp)
+        {
+            fogUp = false;
+        }
+        if (glfwGetKey(WindowIn, GLFW_KEY_EQUAL) == GLFW_PRESS && scene.fogScale < 100.0f && scene.fogScale > 0.0f && !fogDown)
+        {
+            scene.fogScale -= 0.1f;
+            fogDown = true;
+        }
+        else if (glfwGetKey(WindowIn, GLFW_KEY_EQUAL) == GLFW_RELEASE && fogDown)
+        {
+            fogDown = false;
         }
     }
 };

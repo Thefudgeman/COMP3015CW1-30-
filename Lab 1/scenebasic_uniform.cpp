@@ -20,7 +20,7 @@ using glm::vec4;
 
 
 
-SceneBasic_Uniform::SceneBasic_Uniform() : plane(50.0f,50.0f, 1, 1), teapot(14,glm::mat4(1.0f)), torus(1.75f*0.75f, 0.75f*0.75f, 50,50)
+SceneBasic_Uniform::SceneBasic_Uniform() : plane(30.0f,30.0f, 1, 1), teapot(14,glm::mat4(1.0f)), torus(1.75f*0.75f, 0.75f*0.75f, 50,50), angle(0.0f), tPrev(0.0f), rotSpeed(glm::pi<float>()/8.0f), sky(300.0f)
 {
     mesh = ObjMesh::load("media/pig_triangulated.obj", true);
     barrel = ObjMesh::load("media/barrel.obj", true);
@@ -36,7 +36,6 @@ void SceneBasic_Uniform::initScene()
     
     view = glm::lookAt(vec3(5.0f, 5.0f, 7.5f), vec3(0.0f, 0.75f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     projection = mat4(1.0f);
-
 
     float x, z;
     rotateModel = mat4(1.0f);
@@ -61,7 +60,7 @@ void SceneBasic_Uniform::initScene()
         normalShader.setUniform(name.str().c_str(), view * glm::vec4(x, 1.2f, z + 1.0f, -1.0f));
     }
     prog.use();
-    prog.setUniform("lights[0].L", vec3(1.0f, 1.0f, 1.0f) /1.5f);
+    prog.setUniform("Light.L", vec3(1.0f, 1.0f, 1.0f) /1.5f);
     prog.setUniform("lights[1].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
     prog.setUniform("lights[2].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
 
@@ -91,9 +90,10 @@ void SceneBasic_Uniform::initScene()
 
     normalShader.use();
 
-    normalShader.setUniform("lights[0].L", vec3(1.0f, 1.0f, 1.0f) / 1.5f);
-    normalShader.setUniform("lights[1].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
-    normalShader.setUniform("lights[2].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
+    normalShader.setUniform("Light.L", vec3(1.0f));
+    normalShader.setUniform("Light.La", vec3(0.05));
+  //  normalShader.setUniform("lights[1].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
+    //normalShader.setUniform("lights[2].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
 
     normalShader.setUniform("Spot.L", vec3(0.9f));
     normalShader.setUniform("Spot.La", vec3(0.5f));
@@ -103,6 +103,11 @@ void SceneBasic_Uniform::initScene()
     normalShader.setUniform("Fog.MaxDist", 30.0f);
     normalShader.setUniform("Fog.MinDist", 1.0f);
     normalShader.setUniform("Fog.Colour", vec3(0.5f, 0.5f, 0.5f));
+
+    skyBoxShader.use();
+    skyBoxShader.setUniform("Fog.MaxDist", 30.0f);
+    skyBoxShader.setUniform("Fog.MinDist", 0.1f);
+    skyBoxShader.setUniform("Fog.Colour", vec3(0.5f, 0.5f, 0.5f));
 
 }
 
@@ -123,6 +128,11 @@ void SceneBasic_Uniform::compile()
         normalShader.compileShader("shader/normalShader.frag");
         normalShader.link();
         normalShader.use();
+
+        skyBoxShader.compileShader("shader/skybox.vert");
+        skyBoxShader.compileShader("shader/skybox.frag");
+        skyBoxShader.link();
+        skyBoxShader.use();
     }
     catch (GLSLProgramException& e) {
         cerr << e.what() << endl;
@@ -141,7 +151,7 @@ void SceneBasic_Uniform::update(float t)
     }
 
     tPrev = t;
-    angle += 0.25f * deltaT;
+    angle += rotSpeed * deltaT;
     if (angle > glm::two_pi<float>())
     {
         angle -= glm::two_pi<float>();
@@ -160,7 +170,7 @@ void SceneBasic_Uniform::render()
     prog.use();
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, fire);
+    glBindTexture(GL_TEXTURE_2D, ogreDiffuse);
 
     prog.setUniform("Material.Kd", 0.1f, 0.8f, 0.1f);
     prog.setUniform("Material.Ks", vec3(0.0f));
@@ -183,7 +193,7 @@ void SceneBasic_Uniform::render()
     prog.setUniform("Material.Ks", vec3(1.0f));
     prog.setUniform("Material.Ka", vec3(0.5f));
     prog.setUniform("Material.Shinniness", 180.0f);
-
+    prog.setUniform("Fog.MaxDist", 30.0f * fogScale);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, cement);
@@ -217,45 +227,55 @@ void SceneBasic_Uniform::render()
     setMatrices();
     teapot.render();
 
-    normalShader.use();
-    normalShader.setUniform("Spot.Position", vec4(view * lightPos));
-    normalShader.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
-
-    normalShader.setUniform("Material.Kd", 1.0f * 10.0f, 0.4f * 10.0f, 0.72f * 10.0f);
-    normalShader.setUniform("Material.Ks", vec3(0.5f)*10.0f);
-    normalShader.setUniform("Material.Ka", vec3(0.5f) * 10.0f);
-    normalShader.setUniform("Material.Shinniness", 180.0f);
+    skyBoxShader.use();
+    skyBoxShader.setUniform("Fog.MaxDist", 30.0f * fogScale);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, barrelTex);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, barrelNorm);
-
-   // glActiveTexture(GL_TEXTURE1);
-   // glBindTexture(GL_TEXTURE_2D, barrelNorm);
-
- //   barrelModel = mat4(1.0f);
- //   barrelModel = glm::translate(barrelModel, vec3(-10.0f, 2.0f, 0.0f));
-    model = mat4(1.0f);
-    model = glm::translate(model, vec3(-10.0f, 2.0f, 0.0f));
-    model = glm::scale(model, vec3(0.1f));
-
-    setMatricesNorm();
-    barrel->render();
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, ogreDiffuse);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, ogreNorm);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTex);
 
     model = mat4(1.0f);
-    model = glm::translate(model, vec3(-0.0f, 2.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(270.0f), vec3(1.0f, 0.0f, 0.0f));
+    setMatricesSkyBox();
+    sky.render();
 
-    setMatricesNorm();
-    ogre->render();
+
+ //   normalShader.use();
+ //   normalShader.setUniform("Spot.Position", vec3(view * lightPos));
+ //   normalShader.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
+
+ //   normalShader.setUniform("Light.Position", vec4(1.0f,1.0f,1.0f,1.0f));
+
+ //   normalShader.setUniform("Material.Kd", 1.0f, 0.4f, 0.72f);
+ //   normalShader.setUniform("Material.Ks", vec3(1.0f));
+ //   normalShader.setUniform("Material.Ka", vec3(0.5f));
+ //   normalShader.setUniform("Material.Shinniness", 180.0f);
+
+ //   glActiveTexture(GL_TEXTURE0);
+ //   glBindTexture(GL_TEXTURE_2D, barrelTex);
+
+ //   glActiveTexture(GL_TEXTURE1);
+ //   glBindTexture(GL_TEXTURE_2D, barrelNorm);
+
+ ////   barrelModel = mat4(1.0f);
+ ////   barrelModel = glm::translate(barrelModel, vec3(-10.0f, 2.0f, 0.0f));
+ //   model = mat4(1.0f);
+ //   model = glm::translate(model, vec3(-10.0f, 2.0f, 0.0f));
+ //   model = glm::scale(model, vec3(0.1f));
+
+ //   setMatricesNorm();
+ //   barrel->render();
+
+ //   glActiveTexture(GL_TEXTURE0);
+ //   glBindTexture(GL_TEXTURE_2D, ogreDiffuse);
+
+ //   glActiveTexture(GL_TEXTURE1);
+ //   glBindTexture(GL_TEXTURE_2D, ogreNorm);
+
+ //   model = mat4(1.0f);
+ //   model = glm::translate(model, vec3(-0.0f, 2.0f, 0.0f));
+ //   model = glm::rotate(model, glm::radians(270.0f), vec3(1.0f, 0.0f, 0.0f));
+
+ //   setMatricesNorm();
+ //   ogre->render();
 
     mixShader.use();
     mixShader.setUniform("Spot.Position", vec3(view* lightPos));
@@ -265,6 +285,7 @@ void SceneBasic_Uniform::render()
     mixShader.setUniform("Material.Ks", vec3(0.5f));
     mixShader.setUniform("Material.Ka", vec3(0.5f));
     mixShader.setUniform("Material.Shinniness", 180.0f);
+    mixShader.setUniform("Fog.MaxDist", 30.0f * fogScale);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, brick);
@@ -277,6 +298,7 @@ void SceneBasic_Uniform::render()
 
     setMatricesMix();
     cube.render();
+
 
 }
 
@@ -319,11 +341,20 @@ void SceneBasic_Uniform::rotateBarrelModelMMM()
     prog.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
     prog.setUniform("MVP", projection * mv);
 }
+
+void SceneBasic_Uniform::setMatricesSkyBox()
+{
+    mat4 mv = view * model;
+    skyBoxShader.setUniform("ModelViewMatrix", mv);
+    skyBoxShader.setUniform("NormalMatrix", glm::mat3(vec3(mv[0]), vec3(mv[1]), vec3(mv[2])));
+    skyBoxShader.setUniform("MVP", projection * mv);
+}
+
 void SceneBasic_Uniform::resize(int w, int h)
 {
     glViewport(0, 0, w, h);
     width = w;
     height = h;
-    projection = glm::perspective(glm::radians(70.0f), (float)w / h, 0.3f, 100.0f);
+    projection = glm::perspective(glm::radians(70.0f), (float)w / h, 0.3f, 300.0f);
 }
 
