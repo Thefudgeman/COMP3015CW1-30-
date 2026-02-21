@@ -231,7 +231,7 @@ void SceneBasic_Uniform::render()
     skyBoxShader.setUniform("Fog.MaxDist", 30.0f * fogScale);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeTex);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, nightCubeTex);
 
     model = mat4(1.0f);
     setMatricesSkyBox();

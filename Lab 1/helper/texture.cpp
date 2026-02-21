@@ -1,7 +1,8 @@
 #include "texture.h"
 #include "stb/stb_image.h"
 #include "glutils.h"
-
+#include <iostream>
+#include <sstream>
 /*static*/
 GLuint Texture::loadTexture( const std::string & fName ) {
     int width, height;
@@ -34,6 +35,8 @@ unsigned char *Texture::loadPixels(const std::string &fName, int & width, int & 
 }
 
 GLuint Texture::loadCubeMap(const std::string &baseName, const std::string &extension) {
+    stbi_set_flip_vertically_on_load(false);
+
     GLuint texID;
     glGenTextures(1, &texID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, texID);

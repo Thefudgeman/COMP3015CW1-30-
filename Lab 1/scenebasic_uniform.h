@@ -43,6 +43,8 @@ private:
     GLuint barrelTex = Texture::loadTexture("media/texture/WoodenBarrel/Barrel_Lowpoly_DefaultMaterial_AlbedoTransparency.png");
     GLuint barrelNorm = Texture::loadTexture("media/texture/WoodenBarrel/Barrel_Lowpoly_DefaultMaterial_Normal.png");
     GLuint cubeTex = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
+    GLuint nightCubeTex = Texture::loadCubeMap("media/texture/cube/NightSky/night");
+
 
     void compile();
 
