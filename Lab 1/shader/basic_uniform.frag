@@ -100,6 +100,12 @@ vec3 blinnPhongSpot(vec3 position, vec3 n)
 
 void main() {
 
+    if(texture(Tex1, TexCoord).a < 0.15)
+    {
+        discard;
+    }
+
+
     vec3 Colour = vec3(0.0f);
 
    // for (int i = 0; i<3; i++)

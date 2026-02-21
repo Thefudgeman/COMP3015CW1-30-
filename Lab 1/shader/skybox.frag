@@ -16,6 +16,11 @@ in vec3 Vec;
 
 void main() {
 
+    if(texture(SkyBoxTex, normalize(Vec)).a < 0.15)
+    {
+        discard;
+    }
+
     vec3 texColour = texture(SkyBoxTex, normalize(Vec)).rgb;
    
     float dist = abs(pos.z);

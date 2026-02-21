@@ -1,9 +1,2 @@
-﻿  main.cpp
-  scenebasic_uniform.cpp
-C:\Users\theob\OneDrive\Documents\GitHub\COMP3015CW1-30-\Lab 1\scenebasic_uniform.cpp(94,46): warning C4305: 'argument': truncation from 'double' to 'T'
-C:\Users\theob\OneDrive\Documents\GitHub\COMP3015CW1-30-\Lab 1\scenebasic_uniform.cpp(94,46): warning C4305:         with
-C:\Users\theob\OneDrive\Documents\GitHub\COMP3015CW1-30-\Lab 1\scenebasic_uniform.cpp(94,46): warning C4305:         [
-C:\Users\theob\OneDrive\Documents\GitHub\COMP3015CW1-30-\Lab 1\scenebasic_uniform.cpp(94,46): warning C4305:             T=float
-C:\Users\theob\OneDrive\Documents\GitHub\COMP3015CW1-30-\Lab 1\scenebasic_uniform.cpp(94,46): warning C4305:         ]
-  Generating Code...
+﻿  scenebasic_uniform.cpp
   Project_Template.vcxproj -> C:\Users\theob\OneDrive\Documents\GitHub\COMP3015CW1-30-\Lab 1\x64\Debug\Project_Template.exe
