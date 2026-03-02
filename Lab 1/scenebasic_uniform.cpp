@@ -272,7 +272,7 @@ void SceneBasic_Uniform::setupFBO()
     glGenTextures(1, &renderTex);
     glBindTexture(GL_TEXTURE_2D, renderTex);
 
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, 1280, 720);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
@@ -282,7 +282,7 @@ void SceneBasic_Uniform::setupFBO()
     GLuint depthBuf;
     glGenRenderbuffers(1, &depthBuf);
     glBindRenderbuffer(GL_RENDERBUFFER, depthBuf);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 1280, 720);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
 
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuf);
 
@@ -319,7 +319,7 @@ void SceneBasic_Uniform::pass1()
     glm::mat3 normalMatrix = glm::mat3(vec3(view[0]), vec3(view[1]), vec3(view[2]));
     prog.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
 
-    projection = glm::perspective(glm::radians(70.0f), (float)1280 / 720, 0.3f, 600.0f);
+    projection = glm::perspective(glm::radians(70.0f), (float)width / height, 0.3f, 600.0f);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, ogreDiffuse);
