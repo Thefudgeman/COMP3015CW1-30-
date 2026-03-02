@@ -304,8 +304,6 @@ void SceneBasic_Uniform::setupFBO()
 
 void SceneBasic_Uniform::pass1()
 {
-    //vec4 lightPosT = vec4(10.0f*cos(angle), 10.0f, 10.0f*cos(angle), 1.0f);
-
     prog.use();
 
     prog.setUniform("Pass", 1);
