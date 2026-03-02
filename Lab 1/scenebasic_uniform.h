@@ -33,6 +33,8 @@ private:
     glm::mat4 barrelModel;
     SkyBox sky;
 
+    GLuint fsQuad, fboHandle, renderTex;
+
     GLuint brick = Texture::loadTexture("media/texture/brick1.jpg");
     GLuint moss = Texture::loadTexture("media/texture/moss.png");
     GLuint ogreDiffuse = Texture::loadTexture("media/texture/ogre_diffuse.png");
@@ -45,6 +47,9 @@ private:
     GLuint cubeTex = Texture::loadHdrCubeMap("media/texture/cube/pisa-hdr/pisa");
     GLuint nightCubeTex = Texture::loadCubeMap("media/texture/cube/NightSky/night");
 
+    void setupFBO();
+    void pass1();
+    void pass2();
 
     void compile();
 

@@ -31,11 +31,15 @@ void SceneBasic_Uniform::initScene()
 {
     compile();
 
+   // glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+
     glEnable(GL_DEPTH_TEST);
     
     
     view = glm::lookAt(vec3(5.0f, 5.0f, 7.5f), vec3(0.0f, 0.75f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     projection = mat4(1.0f);
+
+    setupFBO();
 
     float x, z;
     rotateModel = mat4(1.0f);
@@ -44,6 +48,34 @@ void SceneBasic_Uniform::initScene()
     barrelModel = mat4(1.0f);
     barrelModel = glm::translate(barrelModel, vec3(-10.0f, 2.0f, 0.0f));
     barrelModel = glm::scale(barrelModel, vec3(0.1f));
+
+    GLfloat verts[] = {
+        -1.0f,-1.0f,0.0f,1.0f,-1.0f,0.0f,1.0f,1.0f,0.0f,
+        -1.0f,-1.0f,0.0f,1.0f,1.0f,0.0f,-1.0f,1.0f,0.0f
+    };
+
+    GLfloat tc[] = {
+        0.0f,0.0f,1.0f,0.0f,1.0f,1.0f,
+        0.0f,0.0f,1.0f,1.0f,0.0f,1.0f
+    };
+
+    unsigned int handle[2];
+    glGenBuffers(2, handle);
+    glBindBuffer(GL_ARRAY_BUFFER, handle[0]);
+    glBufferData(GL_ARRAY_BUFFER, 6 * 3 * sizeof(float), verts, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, handle[1]);
+    glBufferData(GL_ARRAY_BUFFER, 6 * 2 * sizeof(float), tc, GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &fsQuad);
+    glBindVertexArray(fsQuad);
+    glBindBuffer(GL_ARRAY_BUFFER, handle[0]);
+    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, handle[1]);
+    glVertexAttribPointer((GLuint)2, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
+
 
 
     for (int i = 0; i < 3; i++)
@@ -60,14 +92,19 @@ void SceneBasic_Uniform::initScene()
         normalShader.setUniform(name.str().c_str(), view * glm::vec4(x, 1.2f, z + 1.0f, -1.0f));
     }
     prog.use();
-    prog.setUniform("Light.L", vec3(1.0f, 1.0f, 1.0f) /1.5f);
+    prog.setUniform("Light.L", vec3(1.0f));
+    prog.setUniform("Light.La", vec3(0.2f));
+
+    prog.setUniform("EdgeThreshold", 0.05f);
+
+
     prog.setUniform("lights[1].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
     prog.setUniform("lights[2].L", vec3(1.0f, 1.0f, 1.0f) / 2.0f);
 
     prog.setUniform("Spot.L", vec3(0.9f));
     prog.setUniform("Spot.La", vec3(0.5f));
     prog.setUniform("Spot.Exponent", 10.0f);
-    prog.setUniform("Spot.Cutoff", glm::radians(120.0f));
+    prog.setUniform("Spot.Cutoff", glm::radians(30.0f));
 
     prog.setUniform("Fog.MaxDist", 30.0f);
     prog.setUniform("Fog.MinDist", 1.0f);
@@ -164,122 +201,10 @@ void SceneBasic_Uniform::update(float t)
 
 void SceneBasic_Uniform::render()
 {
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    //vec4 lightPosT = vec4(10.0f*cos(angle), 10.0f, 10.0f*cos(angle), 1.0f);
 
-    prog.use();
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, ogreDiffuse);
-
-    prog.setUniform("Material.Kd", 0.1f, 0.8f, 0.1f);
-    prog.setUniform("Material.Ks", vec3(0.0f));
-    prog.setUniform("Material.Ka", vec3(0.1f));
-    prog.setUniform("Material.Shinniness", 180.0f);
-
-    model = mat4(1.0f);
-    model = glm::translate(model, vec3(0.0f, -0.45f, 0.0f));
-
-    setMatrices();
-    plane.render();
-
-    vec4 lightPos = vec4(10.0f , 1.0f, 10.0f, 1.0f);
-    prog.setUniform("Spot.Position", vec3(view * lightPos));
-
-    glm::mat3 normalMatrix = glm::mat3(vec3(view[0]), vec3(view[1]), vec3(view[2]));
-    prog.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
-
-    prog.setUniform("Material.Kd", 1.0f, 0.4f, 0.72f);
-    prog.setUniform("Material.Ks", vec3(1.0f));
-    prog.setUniform("Material.Ka", vec3(0.5f));
-    prog.setUniform("Material.Shinniness", 180.0f);
-    prog.setUniform("Fog.MaxDist", 30.0f * fogScale);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, cement);
-
-
-  //  rotateModel = glm::rotate(rotateModel, glm::radians(90.0f), vec3(0.0f, 1.0f, 0.0f));
- //   rotateModel += glm::translate(rotateModel, vec3(-0.9f, 0.0f, -0.9f));
-    rotateModel = glm::translate(rotateModel, vec3(-0.0f, 0.26f, -0.0f));
-
-    rotateModelMMM();
-    mesh->render();
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, flower);
-
-
-    model = mat4(1.0f);
-    model = glm::translate(model, vec3(0.0f, 0.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
-
-    setMatrices();
-    torus.render();
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, ogreDiffuse);
-
-    model = mat4(1.0f);
-    model = glm::translate(model, vec3(-4.0f, 0.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(270.0f), vec3(1.0f, 0.0f, 0.0f));
-
-    setMatrices();
-    teapot.render();
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, barrelTex);
-
-    model = mat4(1.0f);
-    model = glm::translate(model, vec3(-10.0f, 2.0f, 0.0f));
-    model = glm::scale(model, vec3(0.1f));
-
-    setMatrices();
-    barrel->render();
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, ogreDiffuse);
-
-
-    model = mat4(1.0f);
-    model = glm::translate(model, vec3(-0.0f, 2.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(270.0f), vec3(1.0f, 0.0f, 0.0f));
-
-    setMatrices();
-    ogre->render();
-
-    skyBoxShader.use();
-    skyBoxShader.setUniform("Fog.MaxDist", 30.0f * fogScale);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, nightCubeTex);
-
-    model = mat4(1.0f);
-    setMatricesSkyBox();
-    sky.render();
-
-    mixShader.use();
-    mixShader.setUniform("Spot.Position", vec3(view* lightPos));
-    mixShader.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
-
-    mixShader.setUniform("Material.Kd", 1.0f, 0.4f, 0.72f);
-    mixShader.setUniform("Material.Ks", vec3(0.5f));
-    mixShader.setUniform("Material.Ka", vec3(0.5f));
-    mixShader.setUniform("Material.Shinniness", 180.0f);
-    mixShader.setUniform("Fog.MaxDist", 30.0f * fogScale);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, brick);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, moss);
-    model = mat4(1.0f);
-    model = glm::translate(model, vec3(-4.0f, 4.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(270.0f), vec3(1.0f, 0.0f, 0.0f));
-
-    setMatricesMix();
-    cube.render();
-
+    pass1();
+    glFlush();
+    pass2();
 
 }
 
@@ -339,3 +264,186 @@ void SceneBasic_Uniform::resize(int w, int h)
     projection = glm::perspective(glm::radians(70.0f), (float)w / h, 0.3f, 600.0f);
 }
 
+void SceneBasic_Uniform::setupFBO()
+{
+    glGenFramebuffers(1, &fboHandle);
+    glBindFramebuffer(GL_FRAMEBUFFER, fboHandle);
+
+    glGenTextures(1, &renderTex);
+    glBindTexture(GL_TEXTURE_2D, renderTex);
+
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, 1280, 720);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderTex, 0);
+
+    GLuint depthBuf;
+    glGenRenderbuffers(1, &depthBuf);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthBuf);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 1280, 720);
+
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuf);
+
+    GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1, drawBuffers);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        std::cout << "FBO not complete: " << status << std::endl;
+    }
+    else
+    {
+        std::cout << "FBO complete: " << status << std::endl;
+
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+}
+
+void SceneBasic_Uniform::pass1()
+{
+    //vec4 lightPosT = vec4(10.0f*cos(angle), 10.0f, 10.0f*cos(angle), 1.0f);
+
+    prog.use();
+
+    prog.setUniform("Pass", 1);
+    glBindFramebuffer(GL_FRAMEBUFFER, fboHandle);
+    glEnable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, width, height);
+    vec4 lightPos = vec4(10.0f, 1.0f, 10.0f, 1.0f);
+    prog.setUniform("Spot.Position", vec3(view * lightPos));
+
+    glm::mat3 normalMatrix = glm::mat3(vec3(view[0]), vec3(view[1]), vec3(view[2]));
+    prog.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
+
+    projection = glm::perspective(glm::radians(70.0f), (float)1280 / 720, 0.3f, 600.0f);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, ogreDiffuse);
+
+    prog.setUniform("Material.Kd", 0.1f, 0.8f, 0.1f);
+    prog.setUniform("Material.Ks", vec3(0.05f));
+    prog.setUniform("Material.Ka", vec3(0.1f));
+    prog.setUniform("Material.Shinniness", 0.0f);
+
+    model = mat4(1.0f);
+    model = glm::translate(model, vec3(0.0f, -0.45f, 0.0f));
+
+    setMatrices();
+    plane.render();
+
+    prog.setUniform("Material.Kd", 1.0f, 0.4f, 0.72f);
+    prog.setUniform("Material.Ks", vec3(1.0f));
+    prog.setUniform("Material.Ka", vec3(0.5f));
+    prog.setUniform("Material.Shinniness", 180.0f);
+    prog.setUniform("Fog.MaxDist", 30.0f * fogScale);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, cement);
+
+
+    //  rotateModel = glm::rotate(rotateModel, glm::radians(90.0f), vec3(0.0f, 1.0f, 0.0f));
+   //   rotateModel += glm::translate(rotateModel, vec3(-0.9f, 0.0f, -0.9f));
+    rotateModel = glm::translate(rotateModel, vec3(-0.0f, 0.26f, -0.0f));
+
+    rotateModelMMM();
+    mesh->render();
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, flower);
+
+
+    model = mat4(1.0f);
+    model = glm::translate(model, vec3(0.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
+
+    setMatrices();
+    torus.render();
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, ogreDiffuse);
+
+    model = mat4(1.0f);
+    model = glm::translate(model, vec3(-4.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(270.0f), vec3(1.0f, 0.0f, 0.0f));
+
+    setMatrices();
+    teapot.render();
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, barrelTex);
+
+    model = mat4(1.0f);
+    model = glm::translate(model, vec3(-10.0f, 2.0f, 0.0f));
+    model = glm::scale(model, vec3(0.1f));
+
+    setMatrices();
+    barrel->render();
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, ogreDiffuse);
+
+
+    model = mat4(1.0f);
+    model = glm::translate(model, vec3(-0.0f, 2.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(270.0f), vec3(1.0f, 0.0f, 0.0f));
+
+    setMatrices();
+    ogre->render();
+
+    skyBoxShader.use();
+    skyBoxShader.setUniform("Fog.MaxDist", 30.0f * fogScale);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, nightCubeTex);
+
+    model = mat4(1.0f);
+    setMatricesSkyBox();
+    sky.render();
+
+    mixShader.use();
+    mixShader.setUniform("Spot.Position", vec3(view * lightPos));
+    mixShader.setUniform("Spot.Direction", normalMatrix * vec3(-lightPos));
+
+    mixShader.setUniform("Material.Kd", 1.0f, 0.4f, 0.72f);
+    mixShader.setUniform("Material.Ks", vec3(0.5f));
+    mixShader.setUniform("Material.Ka", vec3(0.5f));
+    mixShader.setUniform("Material.Shinniness", 180.0f);
+    mixShader.setUniform("Fog.MaxDist", 30.0f * fogScale);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, brick);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, moss);
+    model = mat4(1.0f);
+    model = glm::translate(model, vec3(-4.0f, 4.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(270.0f), vec3(1.0f, 0.0f, 0.0f));
+
+    setMatricesMix();
+    cube.render();
+}
+
+void SceneBasic_Uniform::pass2()
+{
+    prog.use();
+    prog.setUniform("Pass", 2);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glViewport(0, 0, width, height);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, renderTex);
+    glDisable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT);
+    model = mat4(1.0f);
+    view = mat4(1.0f);
+    projection = mat4(1.0f);
+    setMatrices();
+
+    glBindVertexArray(fsQuad);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+}

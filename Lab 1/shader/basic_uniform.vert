@@ -10,7 +10,6 @@ uniform vec3 Kd, Ld;
 uniform mat4 ModelViewMatrix, MVP;
 uniform mat3 NormalMatrix;
 
-out vec3 LightIntensity;
 out vec3 n, pos;
 out vec2 TexCoord;
 

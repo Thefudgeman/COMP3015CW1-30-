@@ -6,6 +6,11 @@ in vec2 TexCoord;
 layout (location = 0) out vec4 FragColor;
 layout(binding=0) uniform sampler2D Tex1;
 
+uniform float EdgeThreshold;
+uniform int Pass;
+
+const vec3 lum = vec3(0.2126, 0.7152, 0.0722);
+
 uniform struct LightInfo
 {
     vec4 Position;
@@ -96,34 +101,99 @@ vec3 blinnPhongSpot(vec3 position, vec3 n)
     return ambient + spotScale *Spot.L*(diffuse + spec);
 }
 
+float luminance(vec3 colour)
+{
+    return dot(lum,colour);
+}
+
+
+vec4 pass1()
+{
+       vec3 Colour = vec3(0.0f);
+
+       float dist = abs(pos.z);
+
+       float fogFactor = (Fog.MaxDist - dist)/(Fog.MaxDist-Fog.MinDist);
+
+       fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+       //vec3 shadeColour =blinnPhongSpot(pos,normalize(n));
+
+       Colour = mix(Fog.Colour, blinnPhongSpot(pos,normalize(n)), fogFactor);
+
+      // vec3 texColour = texture(Tex1, TexCoord).rgb;
+
+       return vec4(Colour, 1.0);
+}
+
+vec4 pass2()
+{
+    ivec2 pix = ivec2(gl_FragCoord.xy);
+
+    float s00 = luminance(texelFetchOffset(Tex1, pix, 0, ivec2(-1,1)).rgb);
+    float s10 = luminance(texelFetchOffset(Tex1, pix, 0, ivec2(-1,0)).rgb);
+    float s20 = luminance(texelFetchOffset(Tex1, pix, 0, ivec2(-1,-1)).rgb);
+    float s01 = luminance(texelFetchOffset(Tex1, pix, 0, ivec2(0,1)).rgb);
+    float s21 = luminance(texelFetchOffset(Tex1, pix, 0, ivec2(0,-1)).rgb);
+    float s02 = luminance(texelFetchOffset(Tex1, pix, 0, ivec2(1,1)).rgb);
+    float s12 = luminance(texelFetchOffset(Tex1, pix, 0, ivec2(1,0)).rgb);
+    float s22 = luminance(texelFetchOffset(Tex1, pix, 0, ivec2(1,-1)).rgb);
+
+    float sx = s00 + 2*s10+s20 - (s02 + 2*s12+s22);
+    float sy = s00 + 2*s01+s02 - (s20 + 2*s21+s22);
+
+    float g = sx*sx + sy*sy;
+
+    if(g > EdgeThreshold)
+    {
+        return vec4(1.0);
+    }
+    else
+    {
+        return texelFetch(Tex1, pix,0);
+    }
+
+}
 
 
 void main() {
 
-    if(texture(Tex1, TexCoord).a < 0.15)
-    {
-        discard;
-    }
 
 
-    vec3 Colour = vec3(0.0f);
+
 
    // for (int i = 0; i<3; i++)
   //  {
     //     Colour = phongModel(0, pos, normalize(n));
  //   }
 
-   float dist = abs(pos.z);
+    if(Pass == 1)
+    {
+        if(texture(Tex1, TexCoord).a < 0.15)
+        {
+            discard;
+        }
+        FragColor = pass1();
+    }
+    if(Pass == 2)
+    {
+        FragColor = pass2();
+    }
 
-   float fogFactor = (Fog.MaxDist - dist)/(Fog.MaxDist-Fog.MinDist);
+   //      vec3 Colour = vec3(0.0f);
 
-   fogFactor = clamp(fogFactor, 0.0, 1.0);
+   //    float dist = abs(pos.z);
 
-   //vec3 shadeColour =blinnPhongSpot(pos,normalize(n));
+    //   float fogFactor = (Fog.MaxDist - dist)/(Fog.MaxDist-Fog.MinDist);
 
-   Colour = mix(Fog.Colour, blinnPhongSpot(pos,normalize(n)), fogFactor);
+    //   fogFactor = clamp(fogFactor, 0.0, 1.0);
 
-  // vec3 texColour = texture(Tex1, TexCoord).rgb;
+       //vec3 shadeColour =blinnPhongSpot(pos,normalize(n));
 
-    FragColor = vec4(Colour, 1.0);
+  //     Colour = mix(Fog.Colour, blinnPhongSpot(pos,normalize(n)), fogFactor);
+
+      // vec3 texColour = texture(Tex1, TexCoord).rgb;
+
+    //   FragColor = vec4(Colour, 1.0);
 }
+
