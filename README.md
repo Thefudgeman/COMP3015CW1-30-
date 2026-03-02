@@ -1,5 +1,5 @@
 # COMP3015 CW1
-Used Visual Studio 2022 on Windows 11
+Created in Visual Studio 2022 on Windows 11
 
 ## How it works
 Scenebasic_Uniform.cpp is where all the models are loaded. It also links the different vertex and fragment shaders that are used by the different models. A frame buffer is set up in init scene so that post processing effects
