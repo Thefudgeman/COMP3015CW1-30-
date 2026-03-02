@@ -9,6 +9,7 @@ protected:
 
 public:
     float fogScale = 1.0f;
+    bool edgeDetection = true;
     int width;
     int height;
     glm::mat4 view;

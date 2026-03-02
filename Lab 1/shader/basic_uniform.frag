@@ -8,6 +8,7 @@ layout(binding=0) uniform sampler2D Tex1;
 
 uniform float EdgeThreshold;
 uniform int Pass;
+uniform bool edgeDetection;
 
 const vec3 lum = vec3(0.2126, 0.7152, 0.0722);
 
@@ -143,15 +144,22 @@ vec4 pass2()
     float sy = s00 + 2*s01+s02 - (s20 + 2*s21+s22);
 
     float g = sx*sx + sy*sy;
-
-    if(g > EdgeThreshold)
+    if(edgeDetection)
     {
-        return vec4(1.0);
+       if(g > EdgeThreshold)
+       {
+           return vec4(1.0);
+       }
+       else
+        {
+            return texelFetch(Tex1, pix,0);
+        }    
     }
     else
     {
         return texelFetch(Tex1, pix,0);
     }
+
 
 }
 

@@ -36,7 +36,7 @@ float deltaTime = 0.0f;
 //Last value of time change
 float lastFrame = 0.0f;
 
-bool fogUp, fogDown = false;
+bool fogUp, fogDown, edgeDetectionDown = false;
 
 class SceneRunner {
 private:
@@ -277,6 +277,15 @@ private:
         else if (glfwGetKey(WindowIn, GLFW_KEY_EQUAL) == GLFW_RELEASE && fogDown)
         {
             fogDown = false;
+        }
+        if (glfwGetKey(WindowIn, GLFW_KEY_E) == GLFW_PRESS && !edgeDetectionDown)
+        {
+            edgeDetectionDown = true;
+            scene.edgeDetection = !scene.edgeDetection;
+        }
+        else if (glfwGetKey(WindowIn, GLFW_KEY_E) == GLFW_RELEASE && edgeDetectionDown)
+        {
+            edgeDetectionDown = false;
         }
     }
 };

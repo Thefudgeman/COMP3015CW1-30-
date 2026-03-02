@@ -92,7 +92,7 @@ void SceneBasic_Uniform::initScene()
         normalShader.setUniform(name.str().c_str(), view * glm::vec4(x, 1.2f, z + 1.0f, -1.0f));
     }
     prog.use();
-    prog.setUniform("Light.L", vec3(1.0f));
+    prog.setUniform("Light.L", vec3(1.0f, 0.3f, 0.8f));
     prog.setUniform("Light.La", vec3(0.2f));
 
     prog.setUniform("EdgeThreshold", 0.05f);
@@ -313,7 +313,7 @@ void SceneBasic_Uniform::pass1()
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, width, height);
-    vec4 lightPos = vec4(10.0f, 1.0f, 10.0f, 1.0f);
+    vec4 lightPos = vec4(15.0f * cos(angle), 1.0f, 15.0f * sin(angle), 1.0f);
     prog.setUniform("Spot.Position", vec3(view * lightPos));
 
     glm::mat3 normalMatrix = glm::mat3(vec3(view[0]), vec3(view[1]), vec3(view[2]));
@@ -431,6 +431,14 @@ void SceneBasic_Uniform::pass2()
 {
     prog.use();
     prog.setUniform("Pass", 2);
+    if (edgeDetection)
+    {
+        prog.setUniform("edgeDetection", true);
+    }
+    else
+    {
+        prog.setUniform("edgeDetection", false);
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT);
     glViewport(0, 0, width, height);
