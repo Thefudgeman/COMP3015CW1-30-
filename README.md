@@ -1,6 +1,9 @@
 # COMP3015 CW1
 Created in Visual Studio 2022 on Windows 11
 
+## Youtube link
+https://youtu.be/IWtR3HfM-_Q
+
 ## How it works
 Scenebasic_Uniform.cpp is where all the models are loaded. It also links the different vertex and fragment shaders that are used by the different models. A frame buffer is set up in init scene so that post processing effects
 can be applied. In Scenebasic_Uniform.h all of the textures used by the models are loaded so they can be used anywhere in the cpp. In the render loop the first pass is used to render all of the models and the second pass
